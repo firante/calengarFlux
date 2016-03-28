@@ -3,42 +3,41 @@ var MicroEvent  = require('../js/microevent');
 
 var AppDispatcher = new Flux.Dispatcher();
 
-var monthDays = []; // days in the month
+var monthDays = [[],[],[],[],[],[],[]]; // days in the month
 
-var Store = {
-	// -- actual date --
-	currentDate: {
-		day: 0,
-		month: 0,
-		year: 0
-	},
+// -- actual date --
+var currentDate = {
+	day: 0,
+	month: 0,
+	year: 0
+};
 
-	actualView: null, // object for rendering
-	
+var actualView = null; // object for rendering
 
-	setCurrentDate: function(newDate) {
-		this.currentDate.day = newDate.day;
-		this.currentDate.month = newDate.month;
-		this.currentDate.year = newDate.year;
-	},
+var setCurrentDate = function(newDate) {
+	var date = new Date(newDate.year, newDate.getMonth, newDate.day);
 
+	currentDate.day = parseInt(date.getDate());
+	currentDate.month = parseInt(date.getMonth());
+	currentDate.year = parseInt(date.getFullYear());
+};
 
-
+var StoreController = {
 	// -- function for actualize days view --
 	actualizeMonthView: function() {
-		var date = new Date(this.currentDate.year, this.currentDate.month, 1);
+		var date = new Date(currentDate.year, currentDate.month, 1);
 		if(parseInt(date.getDay()) === 0) {
-			date = new Date(this.currentDate.year, this.currentDate.month, parseInt(date.getDate())-7);
+			date = new Date(currentDate.year, currentDate.month, parseInt(date.getDate())-7);
 		} else {
-			date = new Date(this.currentDate.year, this.currentDate.month, parseInt(date.getDate()) - parseInt(getDay()));
+			date = new Date(currentDate.year, currentDate.month, parseInt(date.getDate()) - parseInt(+date.getDay()-1));
 		}
 
 		for(var i = 0; i < 6; i += 1) {
 				for(var j = 0; j < 7; j += 1) {
-					monthDays[i][j] = {
+					monthDays[i].push({
 						value: parseInt(date.getDate()),
 						isActive: (parseInt(currentDate.month) === parseInt(date.getMonth()) ? 'thisMonth' : 'otherMonth')
-					};
+					});
 					date = new Date(+date.getFullYear(), +date.getMonth(), +date.getDate() + 1);
 				}
 			}
@@ -46,60 +45,58 @@ var Store = {
 	},
 
 	/* -- calculate and generate days matrix --
-	*	@payload  object with cell that bean clicked -- 
+	*	@payload  object with cell that bean clicked --
 	*/
 	calculateDay: function(payload) {
 		if(typeof payload !== 'undefined') {
 			if(payload.actual === 'thisMonth') {
-				this.setCurrentDate({
-					day: parseInt(payload.day), 
-					month: this.currentDate.month, 
-					year: this.currentDate.year
+				setCurrentDate({
+					day: parseInt(payload.day),
+					month: currentDate.month,
+					year: currentDate.year
 				});
 				return;
 			} else {
 				if(payload.day > 15) {
-					this.setCurrentDate({
+					setCurrentDate({
 						day: parseInt(payload.day),
-						month: (this.currentDate.month === 0 ? 11 : this.currentDate.month -= 1),
-						year: (this.currentDate.month === '0' ? this.currentDate.year -= 1 : this.currentDate.year) 
+						month: (currentDate.month === 0 ? 11 : currentDate.month -= 1),
+						year: (currentDate.month === '0' ? currentDate.year -= 1 : currentDate.year)
 					});
 				} else {
-					this.setCurrentDate({
+					setCurrentDate({
 						day: parseInt(payload.day),
-						month: (this.currentDate.month === 11 ? 0 : this.currentDate.month += 1),
-						year: (this.currentDate.month === 11 ? this.currentDate.year += 1 : this.currentDate.year) 
+						month: (currentDate.month === 11 ? 0 : currentDate.month += 1),
+						year: (currentDate.month === 11 ? currentDate.year += 1 : currentDate.year)
 					});
 				}
 			}
 		} else {
 			var date = new Date();
-			this.setCurrentDate({
+			setCurrentDate({
 				day: parseInt(date.getDate()),
 				month: parseInt(date.getMonth()),
 				year: parseInt(date.getFullYear())
 			});
 		}
 		this.actualizeMonthView();
-		this.actualView = monthDays;
+		actualView = monthDays;
 	},
 
 	// -- get actual view for rendering --
 	getActualView: function() {
 		if(!actualView) {
 			this.calculateDay();
-		}	
-		return this.actualView;
+		}
+		return actualView;
 	},
 
 	getCurrentDate: function() {
-		return this.currentDate;
+		return currentDate;
 	}
-
-
 };
 
-MicroEvent.mixin(Store);
+MicroEvent.mixin(StoreController);
 
 /*
 * Registering events
@@ -107,19 +104,28 @@ MicroEvent.mixin(Store);
 AppDispatcher.register(function(payload) {
 	switch(payload.eventName) {
 		case "changeDay":
-			Store.calculateDay(payload);
+			StoreController.calculateDay(payload);
 			if(payload.isActive === 'thisMonth') {
-				Store.trigger('changeDate'); 	// -- change only textbox with date --
+				StoreController.trigger('changeDate'); 	// -- change only textbox with date --
 			} else {
-				Store.trigger('changeView');	// -- change view calendar --
+				StoreController.trigger('changeView');	// -- change view calendar --
 			}
-			break;
+		break;
+		case 'nextMonth':
+			setCurrentDate({
+				day: currentDate.day,
+				month: (currentDate.month === 11 ? 0 : currentDate.month += 1),
+				year: (currentDate.month === 11 ? currentDate.year += 1 : currentDate.year)
+			});
+			this.actualizeMonthView();
+			StoreController.trigger('changeView');
+		break;
 		default:
 			break;
 	}
 });
 
 exports.Dispatcher = AppDispatcher;
-exports.Store = Store; 
-exports.monthList = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 
+exports.Store = StoreController;
+exports.monthList = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October',
 						'November', 'December'];

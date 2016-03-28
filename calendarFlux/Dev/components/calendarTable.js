@@ -1,48 +1,60 @@
 var React = require('react');
+var ReactDOM = require('react-dom');
 var Tr = require('./calendarRow');
 var controller = require('../controller');
 
 var CalendarTable = React.createClass({
+	componentDidMonth: function() {
+		controller.Store.bind('changeView', this.changeView);
+	},
+
+	componentWillUnmonth: function() {
+		controller.Store.unbind('changeView', this.changeView);
+	},
+
+	changeView: function() {
+		ReactDOM.render(<CalendarTable />, document.getElementById('selectDateWidget'));
+	},
+
+	handlerNextMonth: function() {
+		controller.dispatch({
+			eventName: 'nextMonth',
+      item: {month: controller.Store.getCurrentDate().month}
+		});
+	},
+
 	render: function() {
-		var trList = controller.getActualView().map(function(value, index) {
+		var trList = controller.Store.getActualView().map(function(value, index) {
 			return (<Tr rowData={value} key={index} />);
 		});
 
 		return(
-			<div>
-				/*
-				* header calendar table
-				*/
-				<div
-					className = 'collapse navbar-collapse headerCalendar'>
-					<ul
-						className='nav navbar-nav'>
-						<li>
-							<span 
-								className="glyphicon glyphicon-menu-left"
-								aria-hidden='true'>
-							</span>	
-						</li> 
-						<li>
-							<span> 
-								{ controller.monthList[controller.Store.getCurrentDate.month] } 
-							</span>
-						</li> 
-						<li>
-							<span 
-								className="glyphicon glyphicon-menu-right"
-								aria-hidden='true'>
-							</span>	
-						</li> 
-					</ul>
+			<div className='widget-block'>
+				<div className='div-navbar'>
+					<div className='div-gliphicon'>
+						<span
+							className="glyphicon glyphicon-menu-left"
+							aria-hidden='true'>
+						</span>
+					</div>
+					<div className='div-range'>
+						<span>
+							{ controller.monthList[controller.Store.getCurrentDate().month] }
+						</span>
+					</div>
+					<div
+						className='div-gliphicon'
+						onClick={this.handlerNextMonth}
+						>
+						<span
+							className="glyphicon glyphicon-menu-right"
+							aria-hidden='true'>
+						</span>
+					</div>
 				</div>
-
-				/*
-				* body calendar table
-				*/
 				<div>
-					<table 
-						className='table'>
+					<table
+						className='content-table'>
 						<thead>
 							<tr>
 								<td>SU</td>
@@ -59,14 +71,10 @@ var CalendarTable = React.createClass({
 						</tbody>
 					</table>
 				</div>
-
-				/*
-				* footer calendar table
-				*/
 				<div
 					className = 'footerCalendar'>
-					<button 
-						type='button' 
+					<button
+						type='button'
 						className='btn btn-calendar'>
 							Today
 					</button>

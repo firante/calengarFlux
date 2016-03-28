@@ -1,0 +1,48 @@
+.inputDateField {
+  width: 100%;
+}
+
+tbody td {
+  cursor: pointer;
+  text-align: center;
+}
+
+tbody td:hover {
+  background-color: rgba(100, 100, 100, 0.9);
+  border-radius: 20px;
+}
+
+.widget-block {
+  background-color: rgba(30, 30, 30, 0.9);
+  color: white;
+}
+
+.div-navbar {
+  width: 100%;
+}
+
+.div-gliphicon {
+  width: 20%;
+  text-align: center;
+  cursor: pointer;
+  float: left;
+}
+
+.div-gliphicon:hover {
+  background-color: rgba(100, 100, 100, 0.9);
+}
+
+.div-range {
+  width: 60%;
+  text-align: center;
+  cursor: pointer;
+  float: left;
+}
+
+.content-header {
+  text-align: center;
+}
+
+.content-table {
+  width: 100%;
+}

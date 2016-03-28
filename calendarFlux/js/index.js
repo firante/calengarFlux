@@ -144,62 +144,77 @@ module.exports = Tr;
 
 },{"./calendarCell":2,"react":168}],4:[function(require,module,exports){
 var React = require('react');
+var ReactDOM = require('react-dom');
 var Tr = require('./calendarRow');
 var controller = require('../controller');
 
 var CalendarTable = React.createClass({
 	displayName: 'CalendarTable',
 
+	componentDidMonth: function () {
+		controller.Store.bind('changeView', this.changeView);
+	},
+
+	componentWillUnmonth: function () {
+		controller.Store.unbind('changeView', this.changeView);
+	},
+
+	changeView: function () {
+		ReactDOM.render(React.createElement(CalendarTable, null), document.getElementById('selectDateWidget'));
+	},
+
+	handlerNextMonth: function () {
+		controller.dispatch({
+			eventName: 'nextMonth',
+			item: { month: controller.Store.getCurrentDate().month }
+		});
+	},
+
 	render: function () {
-		var trList = controller.getActualView().map(function (value, index) {
+		var trList = controller.Store.getActualView().map(function (value, index) {
 			return React.createElement(Tr, { rowData: value, key: index });
 		});
 
 		return React.createElement(
 			'div',
-			null,
-			'/* * header calendar table */',
+			{ className: 'widget-block' },
 			React.createElement(
 				'div',
-				{
-					className: 'collapse navbar-collapse headerCalendar' },
+				{ className: 'div-navbar' },
 				React.createElement(
-					'ul',
-					{
-						className: 'nav navbar-nav' },
+					'div',
+					{ className: 'div-gliphicon' },
+					React.createElement('span', {
+						className: 'glyphicon glyphicon-menu-left',
+						'aria-hidden': 'true' })
+				),
+				React.createElement(
+					'div',
+					{ className: 'div-range' },
 					React.createElement(
-						'li',
+						'span',
 						null,
-						React.createElement('span', {
-							className: 'glyphicon glyphicon-menu-left',
-							'aria-hidden': 'true' })
-					),
-					React.createElement(
-						'li',
-						null,
-						React.createElement(
-							'span',
-							null,
-							controller.monthList[controller.Store.getCurrentDate.month]
-						)
-					),
-					React.createElement(
-						'li',
-						null,
-						React.createElement('span', {
-							className: 'glyphicon glyphicon-menu-right',
-							'aria-hidden': 'true' })
+						controller.monthList[controller.Store.getCurrentDate().month]
 					)
+				),
+				React.createElement(
+					'div',
+					{
+						className: 'div-gliphicon',
+						onClick: this.handlerNextMonth
+					},
+					React.createElement('span', {
+						className: 'glyphicon glyphicon-menu-right',
+						'aria-hidden': 'true' })
 				)
 			),
-			'/* * body calendar table */',
 			React.createElement(
 				'div',
 				null,
 				React.createElement(
 					'table',
 					{
-						className: 'table' },
+						className: 'content-table' },
 					React.createElement(
 						'thead',
 						null,
@@ -250,7 +265,6 @@ var CalendarTable = React.createClass({
 					)
 				)
 			),
-			'/* * footer calendar table */',
 			React.createElement(
 				'div',
 				{
@@ -269,7 +283,7 @@ var CalendarTable = React.createClass({
 
 module.exports = CalendarTable;
 
-},{"../controller":6,"./calendarRow":3,"react":168}],5:[function(require,module,exports){
+},{"../controller":6,"./calendarRow":3,"react":168,"react-dom":12}],5:[function(require,module,exports){
 var React = require('react'),
     ReactDOM = require('react-dom'),
     controller = require('../controller'),
@@ -279,7 +293,7 @@ var InputField = React.createClass({
 	displayName: 'InputField',
 
 	showWidget: function () {
-		if (document.getElementById('selectDateWidget').innerHTML === "") {
+		if (!$('#selectDateWidget').children().length) {
 			ReactDOM.render(React.createElement(CalendarTable, null), document.getElementById('selectDateWidget'));
 		}
 	},
@@ -294,7 +308,7 @@ var InputField = React.createClass({
 		return React.createElement(
 			'div',
 			{
-				className: 'input-group has-feedback' },
+				className: 'input-group has-feedback inputDateField' },
 			React.createElement('input', {
 				type: 'text',
 				className: 'form-control',
@@ -317,81 +331,83 @@ var MicroEvent = require('../js/microevent');
 
 var AppDispatcher = new Flux.Dispatcher();
 
-var monthDays = []; // days in the month
+var monthDays = [[], [], [], [], [], [], []]; // days in the month
 
-var Store = {
-	// -- actual date --
-	currentDate: {
-		day: 0,
-		month: 0,
-		year: 0
-	},
+// -- actual date --
+var currentDate = {
+	day: 0,
+	month: 0,
+	year: 0
+};
 
-	actualView: null, // object for rendering
+var actualView = null; // object for rendering
 
-	setCurrentDate: function (newDate) {
-		this.currentDate.day = newDate.day;
-		this.currentDate.month = newDate.month;
-		this.currentDate.year = newDate.year;
-	},
+var setCurrentDate = function (newDate) {
+	var date = new Date(newDate.year, newDate.getMonth, newDate.day);
 
+	currentDate.day = parseInt(date.getDate());
+	currentDate.month = parseInt(date.getMonth());
+	currentDate.year = parseInt(date.getFullYear());
+};
+
+var StoreController = {
 	// -- function for actualize days view --
 	actualizeMonthView: function () {
-		var date = new Date(this.currentDate.year, this.currentDate.month, 1);
+		var date = new Date(currentDate.year, currentDate.month, 1);
 		if (parseInt(date.getDay()) === 0) {
-			date = new Date(this.currentDate.year, this.currentDate.month, parseInt(date.getDate()) - 7);
+			date = new Date(currentDate.year, currentDate.month, parseInt(date.getDate()) - 7);
 		} else {
-			date = new Date(this.currentDate.year, this.currentDate.month, parseInt(date.getDate()) - parseInt(getDay()));
+			date = new Date(currentDate.year, currentDate.month, parseInt(date.getDate()) - parseInt(+date.getDay() - 1));
 		}
 
 		for (var i = 0; i < 6; i += 1) {
 			for (var j = 0; j < 7; j += 1) {
-				monthDays[i][j] = {
+				monthDays[i].push({
 					value: parseInt(date.getDate()),
 					isActive: parseInt(currentDate.month) === parseInt(date.getMonth()) ? 'thisMonth' : 'otherMonth'
-				};
+				});
 				date = new Date(+date.getFullYear(), +date.getMonth(), +date.getDate() + 1);
 			}
 		}
 	},
 
 	/* -- calculate and generate days matrix --
- *	@payload  object with cell that bean clicked -- 
+ *	@payload  object with cell that bean clicked --
  */
 	calculateDay: function (payload) {
 		if (typeof payload !== 'undefined') {
 			if (payload.actual === 'thisMonth') {
-				this.setCurrentDate({
+				setCurrentDate({
 					day: parseInt(payload.day),
-					month: this.currentDate.month,
-					year: this.currentDate.year
+					month: currentDate.month,
+					year: currentDate.year
 				});
 				return;
 			} else {
 				if (payload.day > 15) {
-					this.setCurrentDate({
+					setCurrentDate({
 						day: parseInt(payload.day),
-						month: this.currentDate.month === 0 ? 11 : this.currentDate.month -= 1,
-						year: this.currentDate.month === '0' ? this.currentDate.year -= 1 : this.currentDate.year
+						month: currentDate.month === 0 ? 11 : currentDate.month -= 1,
+						year: currentDate.month === '0' ? currentDate.year -= 1 : currentDate.year
 					});
 				} else {
-					this.setCurrentDate({
+					setCurrentDate({
 						day: parseInt(payload.day),
-						month: this.currentDate.month === 11 ? 0 : this.currentDate.month += 1,
-						year: this.currentDate.month === 11 ? this.currentDate.year += 1 : this.currentDate.year
+						month: currentDate.month === 11 ? 0 : currentDate.month += 1,
+						year: currentDate.month === 11 ? currentDate.year += 1 : currentDate.year
 					});
 				}
 			}
 		} else {
 			var date = new Date();
-			this.setCurrentDate({
+			setCurrentDate({
 				day: parseInt(date.getDate()),
 				month: parseInt(date.getMonth()),
 				year: parseInt(date.getFullYear())
 			});
 		}
 		this.actualizeMonthView();
-		this.actualView = monthDays;
+		actualView = monthDays;
 	},
 
 	// -- get actual view for rendering --
@@ -399,16 +415,15 @@ var Store = {
 		if (!actualView) {
 			this.calculateDay();
 		}
-		return this.actualView;
+		return actualView;
 	},
 
 	getCurrentDate: function () {
-		return this.currentDate;
+		return currentDate;
 	}
-
 };
 
-MicroEvent.mixin(Store);
+MicroEvent.mixin(StoreController);
 
 /*
 * Registering events
@@ -416,12 +431,21 @@ MicroEvent.mixin(Store);
 AppDispatcher.register(function (payload) {
 	switch (payload.eventName) {
 		case "changeDay":
-			Store.calculateDay(payload);
+			StoreController.calculateDay(payload);
 			if (payload.isActive === 'thisMonth') {
-				Store.trigger('changeDate'); // -- change only textbox with date --
+				StoreController.trigger('changeDate'); // -- change only textbox with date --
 			} else {
-					Store.trigger('changeView'); // -- change view calendar --
+					StoreController.trigger('changeView'); // -- change view calendar --
 				}
+			break;
+		case 'nextMonth':
+			setCurrentDate({
+				day: currentDate.day,
+				month: currentDate.month === 11 ? 0 : currentDate.month += 1,
+				year: currentDate.month === 11 ? currentDate.year += 1 : currentDate.year
+			});
+			this.actualizeMonthView();
+			StoreController.trigger('changeView');
 			break;
 		default:
 			break;
@@ -429,7 +453,7 @@ AppDispatcher.register(function (payload) {
 });
 
 exports.Dispatcher = AppDispatcher;
-exports.Store = Store;
+exports.Store = StoreController;
 exports.monthList = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
 },{"../js/microevent":8,"flux":9}],7:[function(require,module,exports){
