@@ -1,50 +1,72 @@
 var React = require('react');
 var ReactDOM = require('react-dom');
 var Tr = require('./calendarRow');
-var controller = require('../controller');
+var controller = require('../controllers/flux_store_disp_modul');
 
 var CalendarTable = React.createClass({
-	componentDidMonth: function() {
-		controller.Store.bind('changeView', this.changeView);
-	},
 
-	componentWillUnmonth: function() {
-		controller.Store.unbind('changeView', this.changeView);
-	},
-
-	changeView: function() {
-		ReactDOM.render(<CalendarTable />, document.getElementById('selectDateWidget'));
-	},
-
-	handlerNextMonth: function() {
-		controller.dispatch({
-			eventName: 'nextMonth',
+	handlerNext: function() {
+		controller.Dispatcher.dispatch({
+			eventName: 'dateNext',
       item: {month: controller.Store.getCurrentDate().month}
+		});
+	},
+
+	handlePrevious: function() {
+		controller.Dispatcher.dispatch({
+			eventName: 'datePrev',
+      item: {month: controller.Store.getCurrentDate().month}
+		});
+	},
+
+	handleChangeView: function() {
+		controller.Dispatcher.dispatch({
+			eventName: 'changeView',
 		});
 	},
 
 	render: function() {
 		var trList = controller.Store.getActualView().map(function(value, index) {
-			return (<Tr rowData={value} key={index} />);
+			return (<Tr currentDate={controller.Store.getCurrentDate()} viewType={controller.Store.getActualViewType()} rowData={value} key={index} />);
 		});
+
+		var thead;
+
+		if(controller.Store.getActualViewType() === 'month') {
+			thead = <thead>
+				<tr>
+					<td>SU</td>
+					<td>MO</td>
+					<td>TU</td>
+					<td>WE</td>
+					<td>TH</td>
+					<td>FR</td>
+					<td>SA</td>
+				</tr>
+			</thead>;
+		}
 
 		return(
 			<div className='widget-block'>
 				<div className='div-navbar'>
-					<div className='div-gliphicon'>
+					<div
+						className='div-gliphicon'
+						onClick={this.handlePrevious}>
 						<span
 							className="glyphicon glyphicon-menu-left"
 							aria-hidden='true'>
 						</span>
 					</div>
-					<div className='div-range'>
+					<div
+						className='div-range'
+						onClick={this.handleChangeView}>
 						<span>
-							{ controller.monthList[controller.Store.getCurrentDate().month] }
+							{ controller.Store.getAreaViewSwitched()}
 						</span>
 					</div>
 					<div
 						className='div-gliphicon'
-						onClick={this.handlerNextMonth}
+						onClick={this.handlerNext}
 						>
 						<span
 							className="glyphicon glyphicon-menu-right"
@@ -52,20 +74,10 @@ var CalendarTable = React.createClass({
 						</span>
 					</div>
 				</div>
-				<div>
+				<div className='div-content'>
 					<table
 						className='content-table'>
-						<thead>
-							<tr>
-								<td>SU</td>
-								<td>MO</td>
-								<td>TU</td>
-								<td>WE</td>
-								<td>TH</td>
-								<td>FR</td>
-								<td>SA</td>
-							</tr>
-						</thead>
+							{thead}
 						<tbody>
 							{trList}
 						</tbody>

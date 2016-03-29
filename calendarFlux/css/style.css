@@ -1,3 +1,7 @@
+#content {
+  width: 200px;
+}
+
 .inputDateField {
   width: 100%;
 }
@@ -5,6 +9,8 @@
 tbody td {
   cursor: pointer;
   text-align: center;
+  padding-top: 2px;
+  padding-bottom: 2px;
 }
 
 tbody td:hover {
@@ -12,20 +18,43 @@ tbody td:hover {
   border-radius: 20px;
 }
 
-.widget-block {
-  background-color: rgba(30, 30, 30, 0.9);
+.thisDate {
   color: white;
 }
 
+.otherDate {
+  color: grey;
+}
+
+.toDate {
+  background-color: red;
+  border-radius: 20px;
+}
+
+.widget-block {
+  background-color: rgba(30, 30, 30, 0.9);
+  color: white;
+  font-size: 12px;
+}
+
 .div-navbar {
+
+  position: relative;
   width: 100%;
+  font-size: 14px;
+  height: 36px;
+  background-color: grey;
+  vertical-align: middle;
 }
 
 .div-gliphicon {
+  padding-top: 9px;
+  height: 100%;
   width: 20%;
   text-align: center;
   cursor: pointer;
   float: left;
+  vertical-align: middle;
 }
 
 .div-gliphicon:hover {
@@ -33,10 +62,22 @@ tbody td:hover {
 }
 
 .div-range {
+  padding-top: 9px;
+  height: 100%;
   width: 60%;
   text-align: center;
   cursor: pointer;
   float: left;
+  vertical-align: middle;
+}
+
+.div-range:hover {
+  background-color: rgba(100, 100, 100, 0.9);
+}
+
+.div-content {
+  padding: 10px;
+  height: 160px;
 }
 
 .content-header {
@@ -45,4 +86,5 @@ tbody td:hover {
 
 .content-table {
   width: 100%;
+  height: 100%;
 }

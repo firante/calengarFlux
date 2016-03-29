@@ -1,6 +1,6 @@
 var React = require('react'),
 	ReactDOM = require('react-dom'),
-	controller = require('../controller'),
+	controller = require('../controllers/flux_store_disp_modul'),
 	CalendarTable = require('./calendarTable');
 
 var InputField = React.createClass({
