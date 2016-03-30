@@ -87,7 +87,7 @@ var CalendarTable = React.createClass({
 					className = 'footerCalendar'>
 					<button
 						type='button'
-						className='btn btn-calendar'>
+						className='btn-calendar'>
 							Today
 					</button>
 				</div>

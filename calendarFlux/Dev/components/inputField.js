@@ -5,11 +5,10 @@ var React = require('react'),
 
 var InputField = React.createClass({
 	showWidget: function() {
-		if(!$('#selectDateWidget').children().length) {
+		if(!document.getElementById('selectDateWidget').childNodes.length) {
 			ReactDOM.render(<CalendarTable />, document.getElementById('selectDateWidget'));
 		}
 	},
-
 	render: function() {
 		var date = '';
 

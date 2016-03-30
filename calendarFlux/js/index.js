@@ -309,7 +309,7 @@ var CalendarTable = React.createClass({
 					'button',
 					{
 						type: 'button',
-						className: 'btn btn-calendar' },
+						className: 'btn-calendar' },
 					'Today'
 				)
 			)
@@ -329,7 +329,8 @@ var InputField = React.createClass({
 	displayName: 'InputField',
 
 	showWidget: function () {
-		if (!$('#selectDateWidget').children().length) {
+		alert(document.getElementById('selectDateWidget').childNodes.length);
+		if (!document.getElementById('selectDateWidget').childNodes.length) {
 			ReactDOM.render(React.createElement(CalendarTable, null), document.getElementById('selectDateWidget'));
 		}
 	},
@@ -365,6 +366,7 @@ module.exports = InputField;
 var React = require('react');
 var ReactDOM = require('react-dom');
 var CalendarTable = require('../components/calendarTable');
+var InputField = require('../components/inputField');
 var controller = require('./flux_store_disp_modul');
 
 (function () {
@@ -372,10 +374,16 @@ var controller = require('./flux_store_disp_modul');
     ReactDOM.render(React.createElement(CalendarTable, null), document.getElementById('selectDateWidget'));
   };
 
+  var changeInput = function () {
+    ReactDOM.render(React.createElement(InputField, null), document.getElementById('inputDateField'));
+  };
+
   controller.Store.bind('changeView', changeView);
+
+  controller.Store.bind('changeInput', changeInput);
 })();
 
-},{"../components/calendarTable":4,"./flux_store_disp_modul":7,"react":169,"react-dom":13}],7:[function(require,module,exports){
+},{"../components/calendarTable":4,"../components/inputField":5,"./flux_store_disp_modul":7,"react":169,"react-dom":13}],7:[function(require,module,exports){
 var Flux = require('flux');
 var MicroEvent = require('../../js/microevent');
 
@@ -406,23 +414,7 @@ var monthList = ['January', 'February', 'March', 'April', 'May', 'June', 'July',
 // --- function get key by value , value sliced to three first word ---
 
 var setCurrentDate = function (newDate) {
-	var date;
-	var lastDate;
-	if (newDate.month !== 11) {
-		lastDate = new Date(newDate.year, newDate.month + 1, 0);
-	} else {
-		lastDate = new Date(newDate.year + 1, 0, 0);
-	}
-
-	if (lastDate.getDate() > newDate.day) {
-		date = new Date(newDate.year, newDate.month, newDate.day);
-	} else {
-		if (newDate.month !== 11) {
-			date = new Date(newDate.year, newDate.month + 1, 0);
-		} else {
-			date = new Date(newDate.year + 1, 0, 0);
-		}
-	}
+	var date = new Date(newDate.year, newDate.month, newDate.day);
 	currentDate.day = parseInt(date.getDate());
 	currentDate.month = parseInt(date.getMonth());
 	currentDate.monthText = monthList[date.getMonth()].slice(0, 3);
@@ -503,51 +495,51 @@ var getMonthIndex = function (mon) {
 	}
 };
 
-var StoreController = {
-	/* -- calculate and generate days matrix --
- *	@payload  object with cell that bean clicked --
- */
-	calculateDay: function (payload) {
-		if (typeof payload !== 'undefined') {
-			if (payload.item.isActive === 'thisDate') {
+/* -- calculate and generate days matrix --
+*	@payload  object with cell that bean clicked --
+*/
+var calculateDay = function (payload) {
+	if (typeof payload !== 'undefined') {
+		if (payload.item.isActive === 'thisDate') {
+			setCurrentDate({
+				day: parseInt(payload.item.cellValue),
+				month: currentDate.month,
+				year: currentDate.year
+			});
+			return;
+		} else {
+			if (payload.item.cellValue > 15) {
 				setCurrentDate({
 					day: parseInt(payload.item.cellValue),
-					month: currentDate.month,
-					year: currentDate.year
+					month: currentDate.month === 0 ? 11 : currentDate.month -= 1,
+					year: currentDate.month === '0' ? currentDate.year -= 1 : currentDate.year
 				});
-				return;
 			} else {
-				if (payload.item.cellValue > 15) {
-					setCurrentDate({
-						day: parseInt(payload.item.cellValue),
-						month: currentDate.month === 0 ? 11 : currentDate.month -= 1,
-						year: currentDate.month === '0' ? currentDate.year -= 1 : currentDate.year
-					});
-				} else {
-					setCurrentDate({
-						day: parseInt(payload.item.cellValue),
-						month: currentDate.month === 11 ? 0 : currentDate.month += 1,
-						year: currentDate.month === 11 ? currentDate.year += 1 : currentDate.year
-					});
-				}
+				setCurrentDate({
+					day: parseInt(payload.item.cellValue),
+					month: currentDate.month === 11 ? 0 : currentDate.month += 1,
+					year: currentDate.month === 11 ? currentDate.year += 1 : currentDate.year
+				});
 			}
-		} else {
-			var date = new Date();
-			setCurrentDate({
-				day: parseInt(date.getDate()),
-				month: parseInt(date.getMonth()),
-				year: parseInt(date.getFullYear())
-			});
 		}
-		actualizeMonthView();
-		actualView = month;
-		actualAreaViewSwitched = monthList[currentDate.month] + " " + currentDate.year;
-	},
+	} else {
+		var date = new Date();
+		setCurrentDate({
+			day: parseInt(date.getDate()),
+			month: parseInt(date.getMonth()),
+			year: parseInt(date.getFullYear())
+		});
+	}
+	actualizeMonthView();
+	actualView = month;
+	actualAreaViewSwitched = monthList[currentDate.month] + " " + currentDate.year;
+};
 
+var StoreController = {
 	// -- get actual view for rendering --
 	getActualView: function () {
 		if (!actualView) {
-			this.calculateDay();
+			calculateDay();
 		}
 		return actualView;
 	},
@@ -576,100 +568,24 @@ MicroEvent.mixin(StoreController);
 */
 AppDispatcher.register(function (payload) {
 	switch (payload.eventName) {
+		// -- register dispatcher for click cell events
 		case "changeDate":
-			switch (actualViewType) {
-				case 'month':
-					StoreController.calculateDay(payload);
-					StoreController.trigger('changeView'); // -- change view calendar --
-					break;
-
-				case 'year':
-					setCurrentDate({
-						day: currentDate.day,
-						month: getMonthIndex(payload.item.cellValue),
-						year: currentDate.year
-					});
-					StoreController.trigger('changeView'); // -- change view calendar --
-					break;
-
-				case 'year-range':
-					setCurrentDate({
-						day: currentDate.day,
-						month: currentDate.month,
-						year: payload.item.cellValue
-					});
-					StoreController.trigger('changeView'); // -- change view calendar --
-					break;
-
-				default:
-					break;
-			}
+			clickCellChangeButtonEvents(payload);
 			break;
 
-		// -- register dispatcher for next month --
+		// -- register dispatcher for next date --
 		case 'dateNext':
 			registersDateNext();
 			break;
 
-		// -- register dispatcher for previouse month --
+		// -- register dispatcher for previouse date --
 		case 'datePrev':
-			switch (actualViewType) {
-				case 'month':
-					setCurrentDate({
-						day: currentDate.day,
-						year: currentDate.month === 0 ? currentDate.year -= 1 : currentDate.year,
-						month: currentDate.month === 0 ? 11 : currentDate.month -= 1
-					});
-					actualizeMonthView();
-					actualView = month;
-					actualAreaViewSwitched = monthList[currentDate.month] + " " + currentDate.year;
-					StoreController.trigger('changeView');
-					break;
-
-				case 'year':
-					setCurrentDate({
-						day: currentDate.day,
-						month: currentDate.month,
-						year: currentDate.year -= 1
-					});
-					actualAreaViewSwitched = currentDate.year;
-					StoreController.trigger('changeView');
-					break;
-
-				case 'year-range':
-					actualizeYearView('prev', year_range[0][0].value);
-					actualView = year_range;
-					actualAreaViewSwitched = actualView[0][0].value + '-' + actualView[3][3].value;
-					StoreController.trigger('changeView');
-					break;
-
-				default:
-					break;
-			}
+			registersDatePrevious();
 			break;
 
 		// -- register dispatcher for change view --
 		case 'changeView':
-			switch (actualViewType) {
-
-				case 'month':
-					actualViewType = 'year';
-					actualView = year;
-					actualAreaViewSwitched = currentDate.year;
-					StoreController.trigger('changeView');
-					break;
-
-				case 'year':
-					actualizeYearView();
-					actualViewType = 'year-range';
-					actualView = year_range;
-					actualAreaViewSwitched = actualView[0][0].value + '-' + actualView[3][3].value;
-					StoreController.trigger('changeView');
-					break;
-
-				default:
-					break;
-			}
+			changeViewButton();
 			break;
 
 		default:
@@ -677,11 +593,55 @@ AppDispatcher.register(function (payload) {
 	}
 });
 
+/*
+* function-expressions for register click cell event and change date
+*/
+var clickCellChangeButtonEvents = function (payload) {
+	switch (actualViewType) {
+		case 'month':
+			calculateDay(payload);
+			StoreController.trigger('changeView');
+			StoreController.trigger('changeInput');
+			break;
+
+		case 'year':
+			setCurrentDate({
+				day: 1,
+				month: getMonthIndex(payload.item.cellValue),
+				year: currentDate.year
+			});
+			actualizeMonthView();
+			actualView = month;
+			actualViewType = 'month';
+			actualAreaViewSwitched = monthList[currentDate.month] + " " + currentDate.year;
+			StoreController.trigger('changeView');
+			break;
+
+		case 'year-range':
+			setCurrentDate({
+				day: currentDate.day,
+				month: currentDate.month,
+				year: payload.item.cellValue
+			});
+			actualView = year;
+			actualViewType = 'year';
+			actualAreaViewSwitched = currentDate.year;
+			StoreController.trigger('changeView'); // -- change view calendar --
+			break;
+
+		default:
+			break;
+	}
+};
+
+/*
+* function-expresions for registered Next caret events in calendar
+*/
 var registersDateNext = function () {
 	switch (actualViewType) {
 		case 'month':
 			setCurrentDate({
-				day: currentDate.day,
+				day: 1,
 				year: currentDate.month === 11 ? currentDate.year += 1 : currentDate.year,
 				month: currentDate.month === 11 ? 0 : currentDate.month += 1
 			});
@@ -703,6 +663,70 @@ var registersDateNext = function () {
 
 		case 'year-range':
 			actualizeYearView('next', year_range[3][3].value);
+			actualView = year_range;
+			actualAreaViewSwitched = actualView[0][0].value + '-' + actualView[3][3].value;
+			StoreController.trigger('changeView');
+			break;
+
+		default:
+			break;
+	}
+};
+
+/*
+* function-expresions for register previous caret events in calendar
+*/
+var registersDatePrevious = function () {
+	switch (actualViewType) {
+		case 'month':
+			setCurrentDate({
+				day: 1,
+				year: currentDate.month === 0 ? currentDate.year -= 1 : currentDate.year,
+				month: currentDate.month === 0 ? 11 : currentDate.month -= 1
+			});
+			actualizeMonthView();
+			actualView = month;
+			actualAreaViewSwitched = monthList[currentDate.month] + " " + currentDate.year;
+			StoreController.trigger('changeView');
+			break;
+
+		case 'year':
+			setCurrentDate({
+				day: currentDate.day,
+				month: currentDate.month,
+				year: currentDate.year -= 1
+			});
+			actualAreaViewSwitched = currentDate.year;
+			StoreController.trigger('changeView');
+			break;
+
+		case 'year-range':
+			actualizeYearView('prev', year_range[0][0].value);
+			actualView = year_range;
+			actualAreaViewSwitched = actualView[0][0].value + '-' + actualView[3][3].value;
+			StoreController.trigger('changeView');
+			break;
+
+		default:
+			break;
+	}
+};
+
+/*
+* function-expresions for register change-view button events
+*/
+var changeViewButton = function () {
+	switch (actualViewType) {
+		case 'month':
+			actualViewType = 'year';
+			actualView = year;
+			actualAreaViewSwitched = currentDate.year;
+			StoreController.trigger('changeView');
+			break;
+
+		case 'year':
+			actualizeYearView();
+			actualViewType = 'year-range';
 			actualView = year_range;
 			actualAreaViewSwitched = actualView[0][0].value + '-' + actualView[3][3].value;
 			StoreController.trigger('changeView');
