@@ -25,6 +25,12 @@ var CalendarTable = React.createClass({
 		});
 	},
 
+	handleToDayButton: function() {
+		controller.Dispatcher.dispatch({
+			eventName: 'toDayButton'
+		});
+	},
+
 	render: function() {
 		var trList = controller.Store.getActualView().map(function(value, index) {
 			return (<Tr currentDate={controller.Store.getCurrentDate()} viewType={controller.Store.getActualViewType()} rowData={value} key={index} />);
@@ -87,7 +93,8 @@ var CalendarTable = React.createClass({
 					className = 'footerCalendar'>
 					<button
 						type='button'
-						className='btn-calendar'>
+						className='btn-calendar'
+						onClick={this.handleToDayButton}>
 							Today
 					</button>
 				</div>

@@ -208,13 +208,17 @@ AppDispatcher.register(function(payload) {
 			changeViewButton();
 		break;
 
+		case 'toDayButton':
+			toDayButtonEvent();
+		break;
+
 		default:
 			break;
 	}
 });
 
 /*
-* function-expressions for register click cell event and change date
+* function-expression for register click cell event and change date
 */
 var clickCellChangeButtonEvents = function(payload) {
 	switch(actualViewType) {
@@ -255,7 +259,7 @@ var clickCellChangeButtonEvents = function(payload) {
 }
 
 /*
-* function-expresions for registered Next caret events in calendar
+* function-expresion for registered Next caret events in calendar
 */
 var registersDateNext = function() {
 	switch(actualViewType) {
@@ -294,7 +298,7 @@ var registersDateNext = function() {
 };
 
 /*
-* function-expresions for register previous caret events in calendar
+* function-expresion for register previous caret events in calendar
 */
 var registersDatePrevious = function() {
 	switch(actualViewType) {
@@ -333,7 +337,7 @@ var registersDatePrevious = function() {
 };
 
 /*
-* function-expresions for register change-view button events
+* function-expresion for register change-view button events
 */
 var changeViewButton = function() {
 	switch (actualViewType) {
@@ -355,6 +359,43 @@ var changeViewButton = function() {
 		default: break;
 	}
 };
+
+/*
+* function-expresion for register event onclick toDay button
+*/
+
+var toDayButtonEvent = function() {
+	var date = new Date();
+	setCurrentDate({
+		day: date.getDate(),
+		month: date.getMonth(),
+		year: date.getFullYear()
+	});
+	switch(actualViewType) {
+
+		case 'month':
+			actualizeMonthView();
+			actualAreaViewSwitched = monthList[currentDate.month] + " " + currentDate.year;
+			StoreController.trigger('changeView');
+			StoreController.trigger('changeInput');
+		break;
+			actualAreaViewSwitched = currentDate.year;
+			StoreController.trigger('changeView');
+			StoreController.trigger('changeInput');
+		case 'year':
+		break;
+
+		case 'year-range':
+			actualizeYearView();
+			actualAreaViewSwitched = actualView[0][0].value + '-' + actualView[3][3].value;actualAreaViewSwitched = actualView[0][0].value + '-' + actualView[3][3].value;
+			StoreController.trigger('changeView');
+			StoreController.trigger('changeInput');
+		break;
+
+		default:
+		break;
+	}
+}
 
 exports.Dispatcher = AppDispatcher;
 exports.Store = StoreController;

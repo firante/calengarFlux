@@ -27,8 +27,8 @@ tbody td:hover {
 }
 
 .toDate {
-  background-color: red;
-  border-radius: 20px;
+  background-color: rgba(200, 78, 68, 1);
+  border-radius: 9px;
 }
 
 .widget-block {
@@ -43,7 +43,7 @@ tbody td:hover {
   width: 100%;
   font-size: 14px;
   height: 36px;
-  background-color: grey;
+  background-color: rgba(100, 100, 100, 0.6);
   vertical-align: middle;
 }
 
